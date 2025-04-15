@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fiches Formateurs JCI Tunisie</title>
+  <!-- Materialize CSS & Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200..1000&family=El+Messiri:wght@400..700&family=Zain:wght@200;300;400;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      background: #f0f2f5;
+      font-family: Cairo, Zain;
+    }
+    .card-content p {
+      margin: 5px 0;
+    }
+    .search-bar {
+      margin-bottom: 30px;
+    }
+    .header-color {
+      color: #0097d7;
+    }
+    .btn-custom {
+      background-color: #edbd27 !important;
+      color: #000 !important;
+    }
+    .logo-placeholder {
+      width: 120px !important;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .logo-placeholder {
+        width: 120px !important;
+      }
+      .search-bar input {
+        width: 100% !important;
+      }
+      .search-bar label {
+        font-size: 14px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .logo-placeholder {
+        width: 100px !important;
+      }
+      .header-color {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logos row center" style="width: 100%;">
+      <img src="JCI-Tunisie.png" class="logo-placeholder col s12 l4" alt="">
+      <img src="logo_we_can_make_it-01.png" class="logo-placeholder col s12 l4" alt="">
+      <img src="taba3ni.png" style="width: 90px !important;" class="logo-placeholder col s12 l4" alt="">
+    </div>
+    <h4 class="center header-color" style="font-family: Cairo; font-weight: 900;">Fiches Formateurs JCI Tunisie</h4>
+
+    <div class="input-field search-bar" style="width: 80%;">
+      <i class="material-icons prefix black-text">search</i>
+      <input id="searchInput" type="text" class="validate">
+      <label for="searchInput">Rechercher par nom, domaine ou session</label>
+    </div>
+
+    <div id="cards" class="row"></div>
+  </div>
+
+  <!-- Materialize JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script>
+    async function fetchData() {
+      const sheetId = '1BsWqxe-softpUYlAaCDj8bh-GezzM2hFvqog7rFVjRg';
+      const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
+
+      const response = await fetch(url);
+      const text = await response.text();
+      const json = JSON.parse(text.substring(47).slice(0, -2));
+      const headers = json.table.cols.map(col => col.label.trim());
+
+      const trainerNameIndex = headers.findIndex(h => h.toLowerCase().includes("formateur"));
+      const domainesIndex = headers.findIndex(h => h.toLowerCase().includes("domaines"));
+      const sessionsIndex = headers.findIndex(h => h.toLowerCase().includes("session"));
+      const emailIndex = headers.findIndex(h => h.toLowerCase().includes("email"));
+      const phoneIndex = headers.findIndex(h => h.toLowerCase().includes("téléphone"));
+      const orgIndex = headers.findIndex(h => h.toLowerCase().includes("organisation"));
+      const publicIndex = headers.findIndex(h => h.toLowerCase().includes("public"));
+      const totIndex = headers.findIndex(h => h.toLowerCase().includes("certifié tot"));
+      const intronisationIndex = headers.findIndex(h => h.toLowerCase().includes("intronisation"));
+
+      const container = document.getElementById("cards");
+      container.innerHTML = "";
+      const cardsData = [];
+
+      json.table.rows.forEach(row => {
+        const cells = row.c;
+        const trainerName = cells[trainerNameIndex]?.v || "—";
+        const domaines = cells[domainesIndex]?.v || "—";
+        const sessions = cells[sessionsIndex]?.v || "—";
+        const email = cells[emailIndex]?.v || "—";
+        const phone = cells[phoneIndex]?.v || "—";
+        const org = cells[orgIndex]?.v || "—";
+        const publicTarget = cells[publicIndex]?.v || "—";
+        const tot = cells[totIndex]?.v || "—";
+        const intronisation = cells[intronisationIndex]?.v || "—";
+
+        // 👉 Skip if not certified TOT
+        if (tot.trim().toLowerCase() !== "oui") return;
+
+        const html = `
+          <div class="col s12">
+            <div class="card z-depth-2">
+              <div class="card-content">
+                <span class="card-title"><i class="material-icons left">person</i>${trainerName}</span>
+                <p><b>Email :</b> ${email}</p>
+                <p><b>Téléphone :</b> ${phone}</p>
+                <p><b>Organisation :</b> ${org}</p>
+                <p><b>Année d'intronisation :</b> ${intronisation}</p>
+                <p><b>Domaines :</b> ${domaines}</p>
+                <p><b>Sessions JCI :</b> ${sessions}</p>
+                <p><b>Public cible :</b> ${publicTarget}</p>
+                <p><b>Certifié TOT :</b> ${tot}</p>
+              </div>
+            </div>
+          </div>
+        `;
+
+        cardsData.push({
+          html,
+          name: trainerName.toLowerCase(),
+          sessions: sessions.toLowerCase(),
+          domaines: domaines.toLowerCase(),
+          tot: tot.toLowerCase()
+        });
+      });
+
+      const input = document.getElementById("searchInput");
+
+      function renderCards(filterText = "") {
+        container.innerHTML = "";
+        cardsData
+          .filter(c =>
+            c.name.includes(filterText) ||
+            c.sessions.includes(filterText) ||
+            c.domaines.includes(filterText)
+          )
+          .forEach(c => container.innerHTML += c.html);
+      }
+
+      input.addEventListener("input", () => {
+        renderCards(input.value.toLowerCase());
+      });
+
+      renderCards();
+    }
+
+    window.onload = fetchData;
+  </script>
+</body>
+</html>
